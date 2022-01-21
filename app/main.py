@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from . import models
 from .database import engine
-# from .routers import posts, users, auth, vote
+from .routers import auth, merchant
 from .config import settings
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,10 +21,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# app.include_router(posts.router)
-# app.include_router(users.router)
-# app.include_router(auth.router)
-# app.include_router(vote.router)
+app.include_router(auth.router)
+app.include_router(merchant.router)
 
 @app.get("/")
 def root():
