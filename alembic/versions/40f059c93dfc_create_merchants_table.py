@@ -7,7 +7,6 @@ Create Date: 2022-01-18 20:57:21.586569
 """
 from http import server
 from time import time
-from tkinter.tix import INTEGER
 from alembic import op
 import sqlalchemy as sa
 
