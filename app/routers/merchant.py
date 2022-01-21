@@ -61,4 +61,4 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
 
     final = db.query()
 
-    return merchant, merchant_staff
+    return merchant_staff
