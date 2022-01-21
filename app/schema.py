@@ -34,3 +34,12 @@ class CreateMerchantStaff(BaseModel):
     merchant_branch: int = 0
     role: int
     status: str = 'active'
+
+class MainProduct(BaseModel):
+    name: str
+
+    class Config:
+        orm_mode = True
+
+class CreateMainProduct(BaseModel):
+    name: str
