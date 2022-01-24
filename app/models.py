@@ -63,6 +63,8 @@ class MerchantBranch(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     name = Column(String, nullable=False)
     merchant_id = Column(Integer,  ForeignKey(ondelete="CASCADE", column="merchants.id"), nullable=False)
+    country = Column(Integer, ForeignKey("countries.id"))
+    state = Column(Integer, ForeignKey("states.id"))
     longitude = Column(String, nullable=False) 
     lattitude = Column( String, nullable=False)
     products = Column(ARRAY(Integer), nullable=False)

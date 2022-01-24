@@ -15,13 +15,7 @@ class Status(str, Enum):
 
     class Config:
         orm_mode = True
-
-class InStatus(str, Enum):
-    pending:Status = 'pending'
-    active:Status = 'active'
-    disabled:Status = 'disabled'
     
-
 class AdminLogin(BaseModel):
     username: str
     password: str
@@ -75,3 +69,6 @@ class Merchant(BaseModel):
     class Config:
         use_enum_values = True
         orm_mode = True
+
+# class CreateMerchant(BaseModel):
+#     pass

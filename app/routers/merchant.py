@@ -15,16 +15,22 @@ router = APIRouter(
     tags = ['merchant']
 )
 
-@router.get("/")
+# view all merchants
+@router.get("/", response_model=List[schema.Merchant])
 def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
     
     merchants = db.query(models.Merchants).all()
     if not merchants:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No merchants found")
+    
+    for merchant in merchants:
+        merchant = vars(merchant)
+        merchant['status'] = utils.checkStatus(merchant['status'])
 
     return merchants
 
-@router.get("/{id}", response_model=schema.Merchant )
+# view a single merchant
+@router.get("/{id}", response_model=schema.Merchant)
 def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
     
     merchant = db.query(models.Merchants).filter(models.Merchants.id == id).first()
@@ -34,6 +40,7 @@ def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin
     merchant['status'] = utils.checkStatus(merchant['status'])
     return merchant
 
+# create a merchant & merchant staff
 @router.post("/")
 def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
     merchant_details = payload
@@ -76,7 +83,9 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
 
     return merchant, merchant_staff
 
-@router.patch("/{id}")
+
+# update merchant status
+@router.patch("/{id}", response_model=schema.Merchant)
 def disable_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
 
     merchant = db.query(models.Merchants).filter(models.Merchants.id == id)
@@ -88,5 +97,9 @@ def disable_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Respo
 
     merchant.update(payload.dict(), synchronize_session=False)
     db.commit()
+    
+    merchant = merchant.first()
+    merchant = vars(merchant)
+    merchant['status'] = utils.checkStatus(merchant['status'])
 
-    return merchant.first()
+    return merchant
