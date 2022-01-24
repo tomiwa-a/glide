@@ -1,4 +1,5 @@
 from email.policy import HTTP
+from os import stat
 from statistics import mode
 from typing import List, Optional
 
@@ -18,8 +19,20 @@ router = APIRouter(
 def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
     
     merchants = db.query(models.Merchants).all()
+    if not merchants:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No merchants found")
+
     return merchants
 
+@router.get("/{id}", response_model=schema.Merchant )
+def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+    
+    merchant = db.query(models.Merchants).filter(models.Merchants.id == id).first()
+    if not merchant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No merchant with id {id} found")
+    merchant = vars(merchant)
+    merchant['status'] = utils.checkStatus(merchant['status'])
+    return merchant
 
 @router.post("/")
 def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
@@ -39,14 +52,14 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
     db.commit()
     db.refresh(merchant)
     
-
     merchant_staff = {}
     merchant_staff['name'] = merchant_details.name + " Merchant"
     merchant_staff['username'] = "glide_" + merchant_details.name.lower().strip(" ").replace(" ", "_")
     merchant_staff['password'] = utils.hash_password(merchant_staff['username'])
     merchant_staff['merchant'] = merchant.id
     merchant_staff['role'] = role.id
-    
+
+    merchant = merchant
     
     try:
         merchant_staff = schema.CreateMerchantStaff(**merchant_staff)
@@ -61,4 +74,19 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
 
     final = db.query()
 
-    return merchant_staff
+    return merchant, merchant_staff
+
+@router.patch("/{id}")
+def disable_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    merchant = db.query(models.Merchants).filter(models.Merchants.id == id)
+    merchant_first = merchant.first()
+
+    if not merchant_first:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Merchant with id {id} not found")
+    
+
+    merchant.update(payload.dict(), synchronize_session=False)
+    db.commit()
+
+    return merchant.first()

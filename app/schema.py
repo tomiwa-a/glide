@@ -1,10 +1,26 @@
+from enum import Enum
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr
+from dotenv import Any
+from pydantic import BaseModel, EmailStr, validator
 from datetime import datetime
 
 from sqlalchemy.engine import create_engine
 
 from app.database import Base
+
+class Status(str, Enum):
+    pending = 'pending'
+    active = 'active'
+    disabled = 'disabled'
+
+    class Config:
+        orm_mode = True
+
+class InStatus(str, Enum):
+    pending:Status = 'pending'
+    active:Status = 'active'
+    disabled:Status = 'disabled'
+    
 
 class AdminLogin(BaseModel):
     username: str
@@ -23,7 +39,7 @@ class TokenData(BaseModel):
 class CreateMerchant(BaseModel):
     name: str
     products: List[int]
-    status: str = 'active'
+    status: Status = Status.active
 
 class CreateMerchantStaff(BaseModel):
     name: str
@@ -33,7 +49,7 @@ class CreateMerchantStaff(BaseModel):
     merchant: int
     merchant_branch: int = 0
     role: int
-    status: str = 'active'
+    status: Status = Status.active
 
 class MainProduct(BaseModel):
     name: str
@@ -43,3 +59,19 @@ class MainProduct(BaseModel):
 
 class CreateMainProduct(BaseModel):
     name: str
+
+class ChangeMerchantStatus(BaseModel):
+    status: Status
+
+class Merchant(BaseModel):
+    id: int
+    name: str
+    products: List[int]
+    logo: Optional[str]
+    status: str
+    
+    created_at: datetime
+
+    class Config:
+        use_enum_values = True
+        orm_mode = True

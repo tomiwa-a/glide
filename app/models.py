@@ -8,8 +8,8 @@ from sqlalchemy.sql.sqltypes import TIMESTAMP
 from .database import Base
 
 class Status(enum.Enum):
-    active = 1
-    pending = 2
+    pending = 1
+    active = 2
     disabled = 3
 
 class Admin(Base):
