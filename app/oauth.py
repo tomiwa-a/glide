@@ -11,7 +11,7 @@ from .database import get_db
 from . import models, schema
 from .config import settings
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
+admin_oauth2_scheme = OAuth2PasswordBearer(tokenUrl='./admin_login')
 
 #SECRET KEY
 #ALGORITHM  HS256
@@ -43,12 +43,19 @@ def verify_admin_token(token:str, credentials_exception):
     
     return token_data
 
-def get_current_admin(token:str = Depends(oauth2_scheme), db:Session = Depends(get_db)):
+def get_current_admin(token:str = Depends(admin_oauth2_scheme), db:Session = Depends(get_db)):
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     token = verify_admin_token(token, credentials_exception)
     admin = db.query(models.Admin).filter(token.id == models.Admin.id).first()
     return admin
 
+def get_current_staff(token:str = Depends(admin_oauth2_scheme), db:Session = Depends(get_db)):
+    pass
+
+def get_admin_merchant(admin:str = Depends(get_current_admin), merchant:str = Depends(get_current_staff)):
+    if not (admin or merchant):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+        
 # def get_current_user(token:str = Depends(oauth2_scheme), db:Session = Depends(get_db)):
 #     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
 #     token = verify_access_token(token, credentials_exception)

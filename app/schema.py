@@ -2,11 +2,12 @@ from enum import Enum
 from typing import List, Optional
 from dotenv import Any
 from pydantic import BaseModel, EmailStr, validator
-from datetime import datetime
+from datetime import date, datetime
 
 from sqlalchemy.engine import create_engine
 
 from app.database import Base
+from app.models import MerchantRoles
 
 class Status(str, Enum):
     pending = 'pending'
@@ -72,3 +73,31 @@ class Merchant(BaseModel):
 
 # class CreateMerchant(BaseModel):
 #     pass
+
+class MerchantRole(BaseModel):
+    name: str
+
+    class Config:
+        orm_mode = True
+
+class MerchantStaff(BaseModel):
+    id: int
+    name: str
+    username: str
+    first_time: int
+    merchant_branch: int
+    # role_name: str
+    # status: str
+    created_by: datetime
+
+    class Config:
+        orm_mode = True
+
+class ViewMerchantStaff(BaseModel):
+    MerchantStaff: MerchantStaff
+    role_name: str
+    status: str
+
+    class Config:
+        orm_mode = True
+

@@ -91,6 +91,8 @@ class MerchantStaff(Base):
     status = Column(Enum(Status), nullable=False)
     created_by= Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
+    # role_name = relationship("MerchantRoles")
+
 class Products(Base):
     __tablename__ = "products"
 
