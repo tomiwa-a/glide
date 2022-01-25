@@ -10,7 +10,7 @@ router = APIRouter(
 )
 
 @router.post("/admin_login", response_model=schema.AdminToken)
-def admin_login(response:Response, payload:schema.AdminLogin, db:Session = Depends(get_db)):
+def admin_login(response:Response, payload:schema.Login, db:Session = Depends(get_db)):
     
     admin = db.query(models.Admin).filter(models.Admin.username == payload.username).first()
     if not admin:
@@ -29,6 +29,14 @@ def admin_login(response:Response, payload:schema.AdminLogin, db:Session = Depen
         "access_token": access_token
     }
 
+@router.post("/merchant_login", response_model=schema.AdminToken)
+def admin_login(response:Response, payload:schema.Login, db:Session = Depends(get_db)):
+
+    merchant = db.query(models.MerchantStaff).filter(models.MerchantStaff.username == payload.username).first()
+    if not merchant:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Merchant with username '{payload.username}' not found")
+
+    
 
 # @router.post("/login", response_model=schema.Token)
 # def login(response:Response, payload:OAuth2PasswordRequestForm = Depends(), db:Session = Depends(get_db)):

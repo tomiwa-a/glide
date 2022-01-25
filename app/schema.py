@@ -14,10 +14,7 @@ class Status(str, Enum):
     active = 'active'
     disabled = 'disabled'
 
-    class Config:
-        orm_mode = True
-    
-class AdminLogin(BaseModel):
+class Login(BaseModel):
     username: str
     password: str
 

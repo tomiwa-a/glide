@@ -18,18 +18,40 @@ router = APIRouter(
 )
 
 # view all merchants
-@router.get("/", response_model=List[schema.Merchant])
-def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+@router.get("/")
+def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin), limit:int =10, skip:int = 0, merchant_status:Optional[schema.Status] = "", q:Optional[str] = ""):
     
-    merchants = db.query(models.Merchants).all()
+    merchants = db.query(models.Merchants)
+
+    if merchant_status:
+        merchants = merchants.filter(models.Merchants.status == merchant_status)
+
+    if q:
+        q = q.strip(" ")
+        search = "%{}%".format(q)
+        merchants = merchants.filter(models.Merchants.name.like(search))
+        
+    merchants = merchants.limit(limit).offset(skip).all()
+
     if not merchants:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No merchants found")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No merchants found with parameters")
     
     for merchant in merchants:
         merchant = vars(merchant)
         merchant['status'] = utils.checkStatus(merchant['status'])
+    
+    final = dict()
 
-    return merchants
+
+    final['filter'] = {
+        "show": limit, 
+        "skip": skip, 
+        "status": merchant_status,
+    }
+
+    final['merchants'] = parse_obj_as(List[schema.Merchant], merchants)
+
+    return final
 
 # view a single merchant
 @router.get("/{id}", response_model=schema.Merchant)
@@ -48,7 +70,7 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
     merchant_details = payload
     merchant = payload.dict()
 
-    check_merchant = db.query(models.Merchants).filter(models.Merchants.name == merchant_details.name).first()
+    check_merchant = db.query(models.Merchants).filter(models.Merchants.name == merchant_details.name.strip(" ")).first()
     if check_merchant:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merchant Exists already")
 
@@ -62,14 +84,12 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
     db.refresh(merchant)
     
     merchant_staff = {}
-    merchant_staff['name'] = merchant_details.name + " Merchant"
+    merchant_staff['name'] = merchant_details.name.strip(" ") + " Merchant"
     merchant_staff['username'] = "glide_" + merchant_details.name.lower().strip(" ").replace(" ", "_")
     merchant_staff['password'] = utils.hash_password(merchant_staff['username'])
     merchant_staff['merchant'] = merchant.id
     merchant_staff['role'] = role.id
 
-    merchant = merchant
-    
     try:
         merchant_staff = schema.CreateMerchantStaff(**merchant_staff)
     except:
@@ -81,9 +101,20 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
     db.commit()
     db.refresh(merchant_staff)
 
-    final = db.query()
+    merchant = db.query(models.Merchants).filter(models.Merchants.name == merchant_details.name).first()
+    merchant_staff = db.query(models.MerchantStaff, models.MerchantRoles.name.label("role_name"), func.cast(models.MerchantStaff.status, sqlalchemy.String).label("status")).join(models.MerchantRoles, models.MerchantStaff.role == models.MerchantRoles.id).filter(models.MerchantStaff.merchant == merchant.id).first()
+    print(merchant_details.name)
 
-    return merchant, merchant_staff
+    final = dict()
+
+    merchant = vars(merchant)
+    merchant['status'] = utils.checkStatus(merchant['status'])
+
+    final['merchant'] = merchant
+    
+    final['merchant_staff'] = parse_obj_as(schema.ViewMerchantStaff, merchant_staff)
+
+    return final
 
 
 # update merchant status
@@ -109,7 +140,7 @@ def disable_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Respo
 
 # see all merchant's staff 
 @router.get("/staff/{id}")
-def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant), limit:int =10, skip:int = 0, staff_status:Optional[schema.Status] = "", branch:Optional[str] = Query(None)):
+def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant), limit:int =10, skip:int = 0, staff_status:Optional[schema.Status] = "", branch:Optional[str] = Query(None), q:Optional[str] = "", staff_role:Optional[str] = Query(None),):
 
     merchant = db.query(models.Merchants).filter(models.Merchants.id == id).first()
     if not merchant:
@@ -120,9 +151,19 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
     if staff_status:
         staffs = staffs.filter(models.MerchantStaff.status == staff_status)
 
+    if q:
+        q = q.strip(" ")
+        search = "%{}%".format(q)
+        staffs = staffs.filter(models.MerchantStaff.name.like(search))
+
     if branch:
         branch = [int(number) for number in branch.split(",")]
         staffs = staffs.filter(models.MerchantStaff.merchant_branch.in_(branch))
+
+    if staff_role:
+        print(staff_role)
+        staff_role = [int(number) for number in staff_role.split(",")]
+        staffs = staffs.filter(models.MerchantStaff.role.in_(staff_role))
     
     staffs = staffs.limit(limit).offset(skip).all()
 
@@ -133,18 +174,41 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
     final['merchant_id'] = merchant.id
     final['merchant_name'] = merchant.name
     final['created_at'] = merchant.created_at
+
+    merchant = vars(merchant)
+    
+    final['status'] = utils.checkStatus(merchant['status'])
+
     final['filter'] = {
         "show": limit, 
         "skip": skip, 
         "status": staff_status, 
-        "branch": branch
+        "branch": branch,
+        "query" :q,
+        "role": staff_role
     }
-
-    merchant = vars(merchant)
-    final['status'] = utils.checkStatus(merchant['status'])
     
     final['merchant_staff'] = parse_obj_as(List[schema.ViewMerchantStaff], staffs)
 
     return final
 
-#see all merchant's branch 
+#see all merchant's branch
+
+@router.get("/branch/{id}")
+def get_merchants_branch(id:int, response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant), limit:int =10, skip:int = 0, branch_status:Optional[schema.Status] = "", q:Optional[str] = ""):
+    merchant = db.query(models.Merchants).filter(models.Merchants.id == id).first()
+    if not merchant:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Merchant with id {id} not found")
+
+    branch = db.query(models.MerchantBranch).all()
+    return branch
+
+
+#create a branch
+
+#disable a branch
+
+#update a branch
+
+#create staff & assign to branch
+
