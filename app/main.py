@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from . import models
 from .database import engine
-from .routers import auth, merchant, main_product, branch
+from .routers import auth, merchant, main_product, branch, staff
 from .config import settings
 
 from fastapi.middleware.cors import CORSMiddleware
@@ -25,6 +25,7 @@ app.include_router(auth.router)
 app.include_router(merchant.router)
 app.include_router(main_product.router)
 app.include_router(branch.router)
+app.include_router(staff.router)
 
 @app.get("/")
 def root():

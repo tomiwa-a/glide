@@ -56,6 +56,7 @@ def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends
 
     return final
 
+
 # view a single merchant
 @router.get("/{id}", response_model=schema.Merchant)
 def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
@@ -69,6 +70,7 @@ def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin
     merchant = vars(merchant)
     merchant['status'] = utils.checkStatus(merchant['status'])
     return merchant
+
 
 # create a merchant & merchant staff
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -157,7 +159,7 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
     if user['merchant_status'] == "true":
         merchant_id = user['merchant']['MerchantStaff'].id
         if merchant_id != id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Merchant with id {id} not found")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You're not authorized to view merchant with id {id}")
         
         merchant_branch = user['merchant']['MerchantStaff'].merchant_branch
         if merchant_branch != 0:
@@ -214,8 +216,8 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
 
     return final
 
-#see all merchant's branch
 
+#see all merchant's branch
 @router.get("/branch/{id}")
 def get_merchants_branch(id:int, response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant), limit:int =10, skip:int = 0, branch_status:Optional[schema.Status] = "", q:Optional[str] = ""):
     merchant = db.query(models.Merchants).filter(models.Merchants.id == id).first()
