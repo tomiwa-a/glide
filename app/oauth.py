@@ -1,3 +1,4 @@
+from heapq import merge
 from jose import JWTError, jwt
 from datetime import date, datetime, timedelta
 
@@ -11,7 +12,7 @@ from .database import get_db
 from . import models, schema
 from .config import settings
 
-admin_oauth2_scheme = OAuth2PasswordBearer(tokenUrl='./admin_login')
+admin_oauth2_scheme = OAuth2PasswordBearer(tokenUrl='/admin_login')
 
 #SECRET KEY
 #ALGORITHM  HS256
@@ -36,7 +37,19 @@ def verify_admin_token(token:str, credentials_exception):
         payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
         id: str = payload.get("admin_id")
         if not id:
-            raise credentials_exception
+            return None
+        token_data = schema.TokenData(id=id)
+    except JWTError:
+        raise credentials_exception
+    
+    return token_data
+
+def verify_merchant_token(token:str, credentials_exception):
+    try:
+        payload = jwt.decode(token, SECRET_KEY, ALGORITHM)
+        id: str = payload.get("merchant_id")
+        if not id:
+            return None
         token_data = schema.TokenData(id=id)
     except JWTError:
         raise credentials_exception
@@ -46,15 +59,41 @@ def verify_admin_token(token:str, credentials_exception):
 def get_current_admin(token:str = Depends(admin_oauth2_scheme), db:Session = Depends(get_db)):
     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     token = verify_admin_token(token, credentials_exception)
-    admin = db.query(models.Admin).filter(token.id == models.Admin.id).first()
-    return admin
+    if token != None:
+        admin = db.query(models.Admin).filter(token.id == models.Admin.id).first()
+        return admin
+    return None
+    # if not (admin or token):
+    #     return None
+    # return admin
 
 def get_current_staff(token:str = Depends(admin_oauth2_scheme), db:Session = Depends(get_db)):
-    pass
+    credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    token = verify_merchant_token(token, credentials_exception)
+    if token != None:
+        merchant =  db.query(models.MerchantStaff, models.MerchantRoles).join(models.MerchantRoles, models.MerchantStaff.role == models.MerchantRoles.id).filter(models.MerchantStaff.status == "active").filter(models.MerchantStaff.id == token.id).first()
+        return merchant
+    return None
 
 def get_admin_merchant(admin:str = Depends(get_current_admin), merchant:str = Depends(get_current_staff)):
+    
     if not (admin or merchant):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    
+    admin_status, merchant_status = "false", "false"
+    if admin:
+        admin_status = "true"
+
+    if merchant:
+        merchant_status = "true"
+
+    return {
+        "admin_status": admin_status,
+        "merchant_status": merchant_status,
+        "admin": admin, 
+        "merchant": merchant
+    }
+    
         
 # def get_current_user(token:str = Depends(oauth2_scheme), db:Session = Depends(get_db)):
 #     credentials_exception = HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})

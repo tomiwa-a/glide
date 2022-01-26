@@ -21,6 +21,9 @@ router = APIRouter(
 @router.get("/")
 def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin), limit:int =10, skip:int = 0, merchant_status:Optional[schema.Status] = "", q:Optional[str] = ""):
     
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
     merchants = db.query(models.Merchants)
 
     if merchant_status:
@@ -56,6 +59,9 @@ def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends
 # view a single merchant
 @router.get("/{id}", response_model=schema.Merchant)
 def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     
     merchant = db.query(models.Merchants).filter(models.Merchants.id == id).first()
     if not merchant:
@@ -67,6 +73,10 @@ def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin
 # create a merchant & merchant staff
 @router.post("/", status_code=status.HTTP_201_CREATED)
 def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
     merchant_details = payload
     merchant = payload.dict()
 
@@ -103,8 +113,7 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
 
     merchant = db.query(models.Merchants).filter(models.Merchants.name == merchant_details.name).first()
     merchant_staff = db.query(models.MerchantStaff, models.MerchantRoles.name.label("role_name"), func.cast(models.MerchantStaff.status, sqlalchemy.String).label("status")).join(models.MerchantRoles, models.MerchantStaff.role == models.MerchantRoles.id).filter(models.MerchantStaff.merchant == merchant.id).first()
-    print(merchant_details.name)
-
+    
     final = dict()
 
     merchant = vars(merchant)
@@ -120,6 +129,9 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
 # update merchant status
 @router.patch("/{id}", response_model=schema.Merchant)
 def disable_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
 
     merchant = db.query(models.Merchants).filter(models.Merchants.id == id)
     merchant_first = merchant.first()
@@ -140,7 +152,18 @@ def disable_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Respo
 
 # see all merchant's staff 
 @router.get("/staff/{id}")
-def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant), limit:int =10, skip:int = 0, staff_status:Optional[schema.Status] = "", branch:Optional[str] = Query(None), q:Optional[str] = "", staff_role:Optional[str] = Query(None),):
+def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant), limit:int =10, skip:int = 0, staff_status:Optional[schema.Status] = "", branch:Optional[str] = Query(None), q:Optional[str] = "", staff_role:Optional[str] = Query(None)):
+
+    if user['merchant_status'] == "true":
+        merchant_id = user['merchant']['MerchantStaff'].id
+        if merchant_id != id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Merchant with id {id} not found")
+        
+        merchant_branch = user['merchant']['MerchantStaff'].merchant_branch
+        if merchant_branch != 0:
+            branch = merchant_branch
+
+        # return user['merchant']
 
     merchant = db.query(models.Merchants).filter(models.Merchants.id == id).first()
     if not merchant:
@@ -161,7 +184,6 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
         staffs = staffs.filter(models.MerchantStaff.merchant_branch.in_(branch))
 
     if staff_role:
-        print(staff_role)
         staff_role = [int(number) for number in staff_role.split(",")]
         staffs = staffs.filter(models.MerchantStaff.role.in_(staff_role))
     

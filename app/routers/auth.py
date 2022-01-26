@@ -20,7 +20,8 @@ def admin_login(response:Response, payload:schema.Login, db:Session = Depends(ge
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password")
 
     access_token = oauth.create_access_token(data={
-        "admin_id":admin.id
+        "admin_id":admin.id,
+        "role": "admin"
         })
     
     response.status_code = status.HTTP_200_OK
@@ -29,12 +30,31 @@ def admin_login(response:Response, payload:schema.Login, db:Session = Depends(ge
         "access_token": access_token
     }
 
-@router.post("/merchant_login", response_model=schema.AdminToken)
+@router.post("/merchant_login")
 def admin_login(response:Response, payload:schema.Login, db:Session = Depends(get_db)):
 
-    merchant = db.query(models.MerchantStaff).filter(models.MerchantStaff.username == payload.username).first()
+    merchant = db.query(models.MerchantStaff, models.MerchantRoles).filter(models.MerchantStaff.username == payload.username).filter(models.MerchantStaff.status == "active").join(models.MerchantRoles, models.MerchantStaff.role == models.MerchantRoles.id).first()
     if not merchant:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Merchant with username '{payload.username}' not found")
+    
+    if not utils.verify_password(payload.password, merchant.MerchantStaff.password):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password")
+    
+    # return merchant
+    access_token = oauth.create_access_token(data={
+        "merchant_id":merchant.MerchantStaff.id,
+        "role": merchant.MerchantRoles.name
+        })
+    
+    return {
+        "status": "success",
+        "access_token": access_token
+    }
+
+@router.get("/check_logged")
+def check_logged(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
+
+    return user
 
     
 
