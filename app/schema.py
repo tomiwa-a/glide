@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import List, Optional
 from dotenv import Any
-from pydantic import BaseModel, EmailStr, validator
+from pydantic import BaseModel, EmailStr, constr, validator
 from datetime import date, datetime
 
 from sqlalchemy.engine import create_engine
@@ -15,8 +15,8 @@ class Status(str, Enum):
     disabled = 'disabled'
 
 class Login(BaseModel):
-    username: str
-    password: str
+    username: constr(strip_whitespace=True)
+    password: constr(strip_whitespace=True)
 
 class AdminToken(BaseModel):
     status: str
@@ -34,9 +34,9 @@ class CreateMerchant(BaseModel):
     status: Status = Status.active
 
 class CreateMerchantStaff(BaseModel):
-    name: str
-    username: str
-    password: str
+    name: constr(strip_whitespace=True)
+    username: constr(strip_whitespace=True)
+    password: constr(strip_whitespace=True)
     first_time: int = 1
     merchant: int
     merchant_branch: int = 0
@@ -44,20 +44,20 @@ class CreateMerchantStaff(BaseModel):
     status: Status = Status.active
 
 class MainProduct(BaseModel):
-    name: str
+    name: constr(strip_whitespace=True)
 
     class Config:
         orm_mode = True
 
 class CreateMainProduct(BaseModel):
-    name: str
+    name: constr(strip_whitespace=True)
 
 class ChangeMerchantStatus(BaseModel):
     status: Status
 
 class Merchant(BaseModel):
     id: int
-    name: str
+    name: constr(strip_whitespace=True)
     products: List[int]
     logo: Optional[str]
     status: str
@@ -72,19 +72,19 @@ class Merchant(BaseModel):
 #     pass
 
 class MerchantRole(BaseModel):
-    name: str
+    name: constr(strip_whitespace=True)
 
     class Config:
         orm_mode = True
 
 class MerchantStaff(BaseModel):
     id: int
-    name: str
-    username: str
+    name: constr(strip_whitespace=True)
+    username: constr(strip_whitespace=True)
     first_time: int
     merchant_branch: int
-    # role_name: str
-    # status: str
+    # role_name: constr(strip_whitespace=True)
+    # status: constr(strip_whitespace=True)
     created_by: datetime
 
     class Config:
@@ -92,9 +92,48 @@ class MerchantStaff(BaseModel):
 
 class ViewMerchantStaff(BaseModel):
     MerchantStaff: MerchantStaff
-    role_name: str
-    status: str
+    role_name: constr(strip_whitespace=True)
+    status: constr(strip_whitespace=True)
 
     class Config:
         orm_mode = True
 
+class CreateMerchantBranch(BaseModel):
+    name:constr(strip_whitespace=True)
+    merchant_id: int
+    country: int
+    state: int
+    longitude: Optional[str]
+    lattitude: Optional[str]
+    products: List[int]
+    status: Status = Status.active
+
+class ViewStates(BaseModel):
+    id: int
+    state: constr(strip_whitespace=True)
+
+    class Config:
+        orm_mode = True
+
+class CreateCountry(BaseModel):
+    country: constr(strip_whitespace=True)
+
+class CreateState(BaseModel):
+    state: constr(strip_whitespace=True)
+
+class ViewAdmin(BaseModel):
+    id: int
+    name: constr(strip_whitespace=True)
+    username: constr(strip_whitespace=True)
+    status: constr(strip_whitespace=True)
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class CreateAdmin(BaseModel):
+    name: constr(strip_whitespace=True)
+    username: constr(strip_whitespace=True)
+    status: Status = Status.active
+    
+# 7.426646669537475, 3.910063533386918

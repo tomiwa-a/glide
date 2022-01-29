@@ -1,5 +1,3 @@
-from os import stat
-from statistics import mode
 from typing import List, Optional
 from pydantic import parse_obj_as
 
@@ -16,10 +14,14 @@ router = APIRouter(
     tags = ['staff']
 )
 
+#get all staffs
+
+#get single staff
 @router.get("/{id}")
 def get_single_staff():
     pass
 
+#create a staff
 @router.post("/merchant", status_code=status.HTTP_201_CREATED, response_model=schema.ViewMerchantStaff)
 def create_merchant_staff(response:Response, payload:schema.CreateMerchantStaff, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
     
@@ -47,3 +49,6 @@ def create_merchant_staff(response:Response, payload:schema.CreateMerchantStaff,
     merchant_staff = db.query(models.MerchantStaff, models.MerchantRoles.name.label("role_name"), func.cast(models.MerchantStaff.status, sqlalchemy.String).label("status")).join(models.MerchantRoles, models.MerchantStaff.role == models.MerchantRoles.id).filter(models.MerchantStaff.id == staff_id).first()
 
     return merchant_staff
+
+
+#update staff

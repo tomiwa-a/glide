@@ -1,6 +1,3 @@
-from email.policy import HTTP
-from os import stat
-from statistics import mode
 from typing import List, Optional
 from pydantic import parse_obj_as
 
@@ -57,7 +54,9 @@ def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends
     return final
 
 
-# view a single merchant
+# view a single merchant 
+
+# make the merchant access this too, but just for his umm... , company! 
 @router.get("/{id}", response_model=schema.Merchant)
 def get_merchants(response:Response, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
 
@@ -192,7 +191,7 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
     staffs = staffs.limit(limit).offset(skip).all()
 
     if not staffs:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No staff found for this merchant parameters")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No staff found for this parameters")
      
     final = dict()
     final['merchant_id'] = merchant.id
