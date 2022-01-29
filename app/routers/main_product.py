@@ -13,7 +13,7 @@ router = APIRouter(
 )
 
 @router.get("/", response_model=List[schema.MainProduct])
-def get_products(response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+def get_products(response:Response, db:Session = Depends(get_db)):
     
     products = db.query(models.MainProducts).all()
 
@@ -23,7 +23,7 @@ def get_products(response:Response, db:Session = Depends(get_db), admin=Depends(
     return products
 
 @router.get("/{id}", response_model=schema.MainProduct)
-def get_products(response:Response, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+def get_products(response:Response, id:int, db:Session = Depends(get_db)):
     
     products = db.query(models.MainProducts).filter(models.MainProducts.id == id).first()
 
@@ -35,7 +35,9 @@ def get_products(response:Response, id:int, db:Session = Depends(get_db), admin=
 @router.post("/")
 def get_products(response:Response, payload:schema.CreateMainProduct, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
     
-
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+        
     products = db.query(models.MainProducts).filter(models.MainProducts.name == payload.name).first()
 
     if products:
