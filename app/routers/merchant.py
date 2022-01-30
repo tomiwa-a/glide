@@ -129,7 +129,7 @@ def create_merchant(response:Response, payload:schema.CreateMerchant, db:Session
 
 # update merchant status
 @router.patch("/{id}", response_model=schema.Merchant)
-def disable_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+def update_merchant(id:int, payload:schema.ChangeMerchantStatus, response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
 
     if admin == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
@@ -227,7 +227,6 @@ def get_merchants_branch(id:int, response:Response, db:Session = Depends(get_db)
     return branch
 
 
-#create a branch
 
 #disable a branch
 

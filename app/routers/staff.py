@@ -37,6 +37,11 @@ def create_merchant_staff(response:Response, payload:schema.CreateMerchantStaff,
     check_staff = db.query(models.MerchantStaff).filter(models.MerchantStaff.username == payload.username).first()
     if check_staff:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Username has been taken")
+    
+    if payload.merchant_branch != 0:
+        check_branch = db.query(models.MerchantBranch).filter(models.MerchantBranch.id == payload.merchant_branch).filter(models.MerchantBranch.merchant_id == payload.merchant).first()
+        if not check_branch:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Merchant Branch does not exist")
 
     payload.password = utils.hash_password(payload.password)
     merchant_staff = models.MerchantStaff(**payload.dict())
@@ -52,3 +57,6 @@ def create_merchant_staff(response:Response, payload:schema.CreateMerchantStaff,
 
 
 #update staff
+@router.post("/merchant")
+def update_staff(response:Response, payload:schema.CreateMerchantStaff, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
+    pass

@@ -31,6 +31,7 @@ class TokenData(BaseModel):
 class CreateMerchant(BaseModel):
     name: str
     products: List[int]
+    logo:Optional['str']
     status: Status = Status.active
 
 class CreateMerchantStaff(BaseModel):
