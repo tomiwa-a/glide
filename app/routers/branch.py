@@ -23,9 +23,10 @@ def get_all_branches():
 
 #get single branch
 
+
 #create a branch
 
-@router.post("/", status_code=status.HTTP_201_CREATED,)
+@router.post("/", status_code=status.HTTP_201_CREATED)
 def create_branch(response:Response, payload:schema.CreateMerchantBranch, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
 
     if user['merchant_status'] == "true":

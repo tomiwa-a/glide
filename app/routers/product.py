@@ -10,16 +10,14 @@ from sqlalchemy.orm import session
 from sqlalchemy.orm import Session
 
 router = APIRouter(
-    prefix = "/users",
-    tags = ['users']
+    prefix = "/branch_product",
+    tags = ['products']
 )
 
-#get single user
+#get single product
 
-#get all users
+#get all products in a branch
 
-#create a user
+#create a product
 
-#update a user
-
-#get referals table or something 
+#update a product

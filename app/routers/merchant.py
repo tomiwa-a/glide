@@ -226,11 +226,3 @@ def get_merchants_branch(id:int, response:Response, db:Session = Depends(get_db)
     branch = db.query(models.MerchantBranch).all()
     return branch
 
-
-
-#disable a branch
-
-#update a branch
-
-#create staff & assign to branch
-

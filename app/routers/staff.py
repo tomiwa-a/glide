@@ -14,15 +14,26 @@ router = APIRouter(
     tags = ['staff']
 )
 
-#get all staffs
 
 #get single staff
-@router.get("/{id}")
-def get_single_staff():
-    pass
+@router.get("/{id}", response_model=schema.ViewMerchantStaff)
+def get_single_staff(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
+
+    staff = db.query(models.MerchantStaff).filter(models.MerchantStaff.id == id).first()
+    if not staff:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Staff with id {id} not found")
+
+    if user['merchant_status'] == "true":
+        merchant_id = user['merchant']['MerchantStaff'].id
+        if merchant_id != staff.merchant:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You're not authorized to view this staff")
+    
+    merchant_staff = db.query(models.MerchantStaff, models.MerchantRoles.name.label("role_name"), func.cast(models.MerchantStaff.status, sqlalchemy.String).label("status")).join(models.MerchantRoles, models.MerchantStaff.role == models.MerchantRoles.id).filter(models.MerchantStaff.id == id).first()
+
+    return merchant_staff
 
 #create a staff
-@router.post("/merchant", status_code=status.HTTP_201_CREATED, response_model=schema.ViewMerchantStaff)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.ViewMerchantStaff)
 def create_merchant_staff(response:Response, payload:schema.CreateMerchantStaff, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
     
     if user['merchant_status'] == "true":
@@ -57,6 +68,24 @@ def create_merchant_staff(response:Response, payload:schema.CreateMerchantStaff,
 
 
 #update staff
-@router.post("/merchant")
-def update_staff(response:Response, payload:schema.CreateMerchantStaff, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
-    pass
+
+# make it that I can't change the staff's merchant (do later)
+
+@router.put("/{id}", response_model=schema.ViewMerchantStaff)
+def update_staff(response:Response, id:int, payload:schema.CreateMerchantStaff, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
+
+    staff = db.query(models.MerchantStaff).filter(models.MerchantStaff.id == id)
+    staff_check = staff.first()
+    if not staff_check:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Staff with id {id} not found")
+
+    if user['merchant_status'] == "true":
+        merchant_id = user['merchant']['MerchantStaff'].id
+        if merchant_id != staff_check.merchant:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You're not authorized to update this staff")
+
+
+    staff.update(payload.dict(), synchronize_session=False)
+    db.commit()
+    staff = db.query(models.MerchantStaff, models.MerchantRoles.name.label("role_name"), func.cast(models.MerchantStaff.status, sqlalchemy.String).label("status")).join(models.MerchantRoles, models.MerchantStaff.role == models.MerchantRoles.id).filter(models.MerchantStaff.id == id).first()
+    return staff

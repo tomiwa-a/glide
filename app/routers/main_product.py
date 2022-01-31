@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 
 router = APIRouter(
     prefix = "/product",
-    tags = ['product']
+    tags = ['main-products']
 )
 
 @router.get("/", response_model=List[schema.MainProduct])
