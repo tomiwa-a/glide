@@ -9,7 +9,7 @@ router = APIRouter(
     tags=["auth"]
 )
 
-@router.post("/admin_login", response_model=schema.AdminToken)
+@router.post("/admin_login", response_model=schema.Token)
 def admin_login(response:Response, payload:schema.Login, db:Session = Depends(get_db)):
     
     admin = db.query(models.Admin).filter(models.Admin.username == payload.username).filter(models.Admin.status == "active").first()
@@ -52,11 +52,29 @@ def admin_login(response:Response, payload:schema.Login, db:Session = Depends(ge
     }
 
 @router.get("/check_logged")
-def check_logged(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_merchant)):
-
+def check_logged(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_all)):
     return user
 
+@router.post("/user_login", response_model=schema.Token)
+def admin_login(response:Response, payload:schema.UserLogin, db:Session = Depends(get_db)):
+
+    user = db.query(models.Users).filter(models.Users.phone_number == payload.telephone).first()
+    if not user:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"User not found")
+
+    if not utils.verify_password(payload.password, user.password):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password")
+
+    access_token = oauth.create_access_token(data={
+        "user_id":user.id
+        })
     
+    response.status_code = status.HTTP_200_OK
+    return {
+        "status": "success",
+        "access_token": access_token
+    }
+
 
 # @router.post("/login", response_model=schema.Token)
 # def login(response:Response, payload:OAuth2PasswordRequestForm = Depends(), db:Session = Depends(get_db)):

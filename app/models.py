@@ -28,9 +28,9 @@ class Users(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
-    email = Column( String, nullable=False, unique=True)
+    email = Column(String, nullable=True, unique=True)
     password = Column(String, nullable=False)
-    phone_number = Column(String, nullable=False)
+    phone_number = Column(String, nullable=False, unique=True)
     country = Column(Integer, ForeignKey("countries.id"))
     state = Column(Integer, ForeignKey("states.id"))
     referal = Column(Integer, unique=True, nullable=False)
@@ -115,6 +115,10 @@ class Countries(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     country = Column(String , nullable=False)
 
+class Referals(Base):
+    __tablename__ = "referals"
+    user_id = Column(Integer, ForeignKey(column="users.id", ondelete="CASCADE"), nullable=False, primary_key=True) 
+    refered_id = Column(Integer, ForeignKey(column="users.id", ondelete="CASCADE"), nullable=False, primary_key=True)
 
 
 # class Post(Base):

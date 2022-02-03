@@ -18,7 +18,11 @@ class Login(BaseModel):
     username: constr(strip_whitespace=True)
     password: constr(strip_whitespace=True)
 
-class AdminToken(BaseModel):
+class UserLogin(BaseModel):
+    telephone: constr(strip_whitespace=True)
+    password: constr(strip_whitespace=True)
+
+class Token(BaseModel):
     status: str
     access_token: str
 
@@ -138,3 +142,19 @@ class CreateAdmin(BaseModel):
     status: Status = Status.active
     
 # 7.426646669537475, 3.910063533386918
+
+class CreateUser(BaseModel):
+    first_name: constr(strip_whitespace=True)
+    last_name: constr(strip_whitespace=True)
+    phone_number: constr(strip_whitespace=True)
+    password: constr(strip_whitespace=True)
+    country: int
+    state: int
+    pin: int
+    referal: int = 0
+    status: Status = Status.active
+
+class SendMoney(BaseModel):
+    phone_number: constr(strip_whitespace=True)
+    description: constr(strip_whitespace=True)
+    amount: int
