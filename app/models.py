@@ -120,6 +120,24 @@ class Referals(Base):
     user_id = Column(Integer, ForeignKey(column="users.id", ondelete="CASCADE"), nullable=False, primary_key=True) 
     refered_id = Column(Integer, ForeignKey(column="users.id", ondelete="CASCADE"), nullable=False, primary_key=True)
 
+class Banks(Base):
+    __tablename__ = "banks"
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    name = Column(String, nullable=False)
+    code = Column(Integer, nullable=False)
+    tag = Column(String, nullable=False)
+
+class Withdrawal(Base):
+    __tablename__ = "withdrawal"
+
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    user_id = Column(Integer, ForeignKey(column="users.id"), nullable=False)
+    amount = Column(Integer, nullable=False)
+    account_number = Column(String, nullable=False)
+    bank = Column(Integer, ForeignKey(column="banks.id"),  nullable=False)
+    status = Column(Enum(Status), nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+
 
 # class Post(Base):
 #     __tablename__ = "posts"

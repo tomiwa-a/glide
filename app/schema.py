@@ -158,3 +158,9 @@ class SendMoney(BaseModel):
     phone_number: constr(strip_whitespace=True)
     description: constr(strip_whitespace=True)
     amount: int
+
+class Withdraw(BaseModel):
+    amount: int
+    account_number: constr(strip_whitespace=True)
+    bank: int
+    status: Status = Status.pending 

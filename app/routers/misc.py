@@ -8,6 +8,7 @@ from ..database import get_db
 from fastapi import FastAPI, Query, Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import session
 from sqlalchemy.orm import Session
+import requests
 
 router = APIRouter(
     tags=['misc']
@@ -167,3 +168,29 @@ def create_admin(response:Response, payload:schema.CreateAdmin, db:Session = Dep
     
 
     return admin
+
+# @router.get("/list_banks")
+# def get_banks():
+#     url = "https://api.paystack.co/bank?country=nigeria&perPage=100"
+
+#     payload={}
+#     headers = {}
+
+#     response = requests.request("GET", url, headers=headers, data=payload)
+#     return response.json()
+
+@router.get("/list_banks")
+def get_banks(response:Response, db:Session = Depends(get_db)):
+    banks = db.query(models.Banks).all()
+    if not banks:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No banks found")
+    
+    return banks
+
+@router.get("/list_banks/{id}")
+def get_single_bank(response:Response, id:int, db:Session = Depends(get_db)):
+    bank = db.query(models.Banks).filter(models.Banks.id == id).first()
+    if not bank:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No bank found with id {id} found")
+    
+    return bank

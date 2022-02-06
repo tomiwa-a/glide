@@ -1,5 +1,5 @@
 from typing import List, Optional
-from pydantic import parse_obj_as
+from pydantic import EmailStr, parse_obj_as
 
 from sqlalchemy import cast, func
 import sqlalchemy
@@ -29,6 +29,34 @@ def get_single_user(response:Response, db:Session = Depends(get_db), user=Depend
 
 
 #get all users
+
+#check if phone has been used
+@router.get("/check_phone/{phone}")
+def check_phone(response:Response, phone:str, db:Session = Depends(get_db)):
+
+    check = db.query(models.Users).filter(models.Users.phone_number == phone).first()
+    if check:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Phone number has been used")
+    
+    return {
+        "detail": "Phone number has not been used"
+    }
+
+#check if email has been used
+@router.get("/check_email/{email}")
+def check_phone(response:Response, email:EmailStr, db:Session = Depends(get_db)):
+
+    check = db.query(models.Users).filter(models.Users.email == email).first()
+    if check:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Email has been used")
+    
+    return {
+        "detail": "Email has not been used"
+    }
+
+
+
+
 
 #create a user
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.Token)
@@ -66,13 +94,14 @@ def create_user(response:Response, payload:schema.CreateUser, db:Session = Depen
         "user_id":user.id
         })
     
-    response.status_code = status.HTTP_200_OK
     return {
         "status": "success",
         "access_token": access_token
     }
 
 #update a user
+
+
 
 #get referals table or something 
 
@@ -86,6 +115,12 @@ def get_referals(response:Response, db:Session = Depends(get_db), user=Depends(o
     
 @router.post("/send-money")
 def send_money(response:Response, payload:schema.SendMoney, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    pass
+
+@router.post("/withdraw")
+def withdraw(response:Response, payload:schema.Withdraw, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
     pass
