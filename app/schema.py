@@ -14,6 +14,24 @@ class Status(str, Enum):
     active = 'active'
     disabled = 'disabled'
 
+class TransactionDesc(str, Enum):
+    withdrawal_fees = 'Withdrawal Fees'
+    withdrawal = 'Withdrawal'
+    deposit = 'Deposit'
+    send_fees = 'Send Fees'
+    receive = 'Receive'
+    purchase = 'Purchase'
+
+class TransactionPos(str, Enum):
+    positive = "positive"
+    negative = "negative"
+
+class TransactionStatus(str, Enum):
+    pending = 'pending'
+    successful = 'successful'
+    declined = 'declined'
+    cancelled = 'cancelled'
+
 class Login(BaseModel):
     username: constr(strip_whitespace=True)
     password: constr(strip_whitespace=True)
@@ -160,7 +178,15 @@ class SendMoney(BaseModel):
     amount: int
 
 class Withdraw(BaseModel):
+
     amount: int
     account_number: constr(strip_whitespace=True)
     bank: int
     status: Status = Status.pending 
+
+    @validator('amount')
+    def check_amount(cls, v):
+        if v < 5000:
+            raise ValueError("Cannot withdraw less than 5000.")
+        return int(v)
+        # assert v < 5000, 'Cannot withdraw less than 5000.'

@@ -1,7 +1,8 @@
+from typing import Optional
 from passlib.context import CryptContext
 
-from app.models import Status
-from app.models import Users
+from app.models import Status, Users, Transactions
+from app.schema import TransactionDesc, TransactionPos, TransactionStatus
 
 import random, math
 
@@ -31,3 +32,21 @@ def generate_referal(db):
             break
 
     return random_str
+
+def make_transaction(db, user_id:int, status:TransactionStatus, amount:int, description: TransactionDesc, position:TransactionPos, order_id:int = 0):
+
+    print(locals())
+
+    transaction = dict()
+    transaction['user_id'] = user_id
+    transaction['amount'] = amount
+    transaction['description'] = description
+    transaction['position'] = position
+    transaction['status'] = status
+    transaction['order_id'] = order_id
+
+    transaction = Transactions(**transaction)
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+    return transaction

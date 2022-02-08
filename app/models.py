@@ -12,6 +12,12 @@ class Status(enum.Enum):
     active = 2
     disabled = 3
 
+# class TransactionDesc(enum.Enum):
+#     withdrawal_fees = 'Withdrawal Fees'
+#     withdrawal = 'Withdrawal'
+#     deposit = 'Deposit'
+
+
 class Admin(Base):
     __tablename__ = "admin"
 
@@ -138,6 +144,17 @@ class Withdrawal(Base):
     status = Column(Enum(Status), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
+class Transactions(Base):
+    __tablename__ = "transactions"
+
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    user_id = Column(Integer, ForeignKey(column="users.id"), nullable=False)
+    amount = Column(Integer, nullable=False)
+    description = Column(String, nullable=False)
+    position = Column(String, nullable=False)
+    status = Column(String, nullable=False)
+    order_id = Column(Integer, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
 # class Post(Base):
 #     __tablename__ = "posts"
