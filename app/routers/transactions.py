@@ -13,6 +13,16 @@ router = APIRouter(
     tags = ['transaction']
 )
 
+@router.get("/transaction_status")
+def get_transaction_status():
+    enum_list = list(map(lambda c: c.value, schema.TransactionStatus))
+    return enum_list
+
+@router.get("/transaction_description")
+def get_transaction_description():
+    enum_list = list(map(lambda c: c.value, schema.TransactionDesc))
+    return enum_list
+
 @router.get("/{id}", response_model=schema.ViewTransaction)
 def get_single_transaction(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_admin_user)):
 
