@@ -53,7 +53,7 @@ def withdraw(response:Response, payload:schema.Withdraw, db:Session = Depends(ge
     # takes tranfer charge, then withdraws . should make an util for the transfer charge.
 
 @router.get("/{id}", response_model=schema.ViewWithdrawals)
-def get_single_withdraw(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_admin_user)):
+def get_single_withdrawal(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_admin_user)):
 
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})

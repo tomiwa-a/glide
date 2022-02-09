@@ -227,3 +227,16 @@ class ViewWithdrawals(BaseModel):
 
     class Config:
         orm_mode = True
+
+class ViewTransaction(BaseModel):
+    id: int
+    user_id: int
+    amount: int
+    description: TransactionDesc
+    order_id: int
+    position: TransactionPos
+    status: TransactionStatus
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
