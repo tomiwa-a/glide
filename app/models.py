@@ -144,6 +144,9 @@ class Withdrawal(Base):
     status = Column(Enum(Status), nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
+    bank_detail = relationship("Banks")
+    user_detail = relationship("Users")
+
 class Transactions(Base):
     __tablename__ = "transactions"
 
@@ -155,6 +158,7 @@ class Transactions(Base):
     status = Column(String, nullable=False)
     order_id = Column(Integer, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    
 
 # class Post(Base):
 #     __tablename__ = "posts"

@@ -179,7 +179,7 @@ def create_admin(response:Response, payload:schema.CreateAdmin, db:Session = Dep
 #     response = requests.request("GET", url, headers=headers, data=payload)
 #     return response.json()
 
-@router.get("/list_banks")
+@router.get("/list_banks", response_model=List[schema.ViewBanks])
 def get_banks(response:Response, db:Session = Depends(get_db)):
     banks = db.query(models.Banks).all()
     if not banks:
@@ -187,7 +187,7 @@ def get_banks(response:Response, db:Session = Depends(get_db)):
     
     return banks
 
-@router.get("/list_banks/{id}")
+@router.get("/list_banks/{id}", response_model=schema.ViewBanks)
 def get_single_bank(response:Response, id:int, db:Session = Depends(get_db)):
     bank = db.query(models.Banks).filter(models.Banks.id == id).first()
     if not bank:

@@ -190,3 +190,40 @@ class Withdraw(BaseModel):
             raise ValueError("Cannot withdraw less than 5000.")
         return int(v)
         # assert v < 5000, 'Cannot withdraw less than 5000.'
+
+class ViewBanks(BaseModel):
+    id: int
+    name: str
+    code: int
+    tag: str
+
+    class Config:
+        orm_mode = True
+
+class ViewUser(BaseModel):
+    id: int 
+    first_name: str
+    last_name: str
+    country: int
+    referal: str
+    address: Optional[str]
+    pin: int
+    email: Optional[str]
+    phone_number: str
+    state: int
+    dob: Optional[date]
+    balance: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
+class ViewWithdrawals(BaseModel):
+    id: int
+    amount: int
+    account_number: str
+    created_at: datetime
+    bank_detail: ViewBanks
+
+    class Config:
+        orm_mode = True

@@ -52,6 +52,40 @@ def withdraw(response:Response, payload:schema.Withdraw, db:Session = Depends(ge
     return withdrawal
     # takes tranfer charge, then withdraws . should make an util for the transfer charge.
 
-@router.get("/{id}")
-def withdraw(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
-    pass
+@router.get("/{id}", response_model=schema.ViewWithdrawals)
+def get_single_withdraw(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_admin_user)):
+
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    withdrawal = db.query(models.Withdrawal).filter(models.Withdrawal.id == id).first()
+
+    if not withdrawal:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No withdrawal Found")
+
+    if(user['user_status'] == "true"):
+        if withdrawal.user_id != user['user'].id:
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized to view withdrawal", headers={"WWW-Authenticate": "Bearer"})
+
+    return withdrawal
+
+@router.get("/", response_model=List[schema.ViewWithdrawals])
+def get_all_withdrawals(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_user), limit:int =10, skip:int = 0, withdrawal_status:Optional[schema.Status] = ""):
+
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    
+    withdrawals = db.query(models.Withdrawal)
+
+    if(user['user_status'] == "true"):
+        withdrawals = withdrawals.filter(models.Withdrawal.user_id == user['user'].id)
+
+    if withdrawal_status:
+        withdrawals = withdrawals.filter(models.Withdrawal.status == withdrawal_status)
+
+    withdrawals = withdrawals.limit(limit).offset(skip).all()
+
+    if not withdrawals:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No withdrawals")
+
+    return withdrawals

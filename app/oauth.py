@@ -116,6 +116,24 @@ def get_admin_merchant(admin:str = Depends(get_current_admin), merchant:str = De
         "merchant": merchant
     }
     
+def get_admin_user(admin:str = Depends(get_current_admin), user:str = Depends(get_current_user)):
+    if not (admin or user):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    
+    admin_status, user_status = "false", "false"
+    if admin:
+        admin_status = "true"
+
+    if user:
+        user_status = "true"
+
+    return {
+        "admin_status": admin_status,
+        "user_status": user_status,
+        "admin": admin, 
+        "user": user
+    }
+
 def get_all(admin:str = Depends(get_current_admin), merchant:str = Depends(get_current_staff), user:str = Depends(get_current_user)):
 
     if not (admin or merchant or user):
