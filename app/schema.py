@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, IntEnum
 from typing import List, Optional
 from dotenv import Any
 from pydantic import BaseModel, EmailStr, constr, validator
@@ -19,6 +19,7 @@ class TransactionDesc(str, Enum):
     withdrawal = 'Withdrawal'
     deposit = 'Deposit'
     send_fees = 'Send Fees'
+    send = 'Send'
     receive = 'Receive'
     purchase = 'Purchase'
 
@@ -31,6 +32,9 @@ class TransactionStatus(str, Enum):
     successful = 'successful'
     declined = 'declined'
     cancelled = 'cancelled'
+
+class TransactionFees(IntEnum):
+    transfer_charge:int = 100
 
 class Login(BaseModel):
     username: constr(strip_whitespace=True)

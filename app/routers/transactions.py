@@ -18,6 +18,11 @@ def get_transaction_status():
     enum_list = list(map(lambda c: c.value, schema.TransactionStatus))
     return enum_list
 
+# @router.get("/transaction_fees")
+# def get_transaction_status():
+#     enum_list = list(map(lambda c,: c.value, schema.TransactionFees))
+#     return enum_list
+
 @router.get("/transaction_description")
 def get_transaction_description():
     enum_list = list(map(lambda c: c.value, schema.TransactionDesc))
@@ -57,7 +62,7 @@ def get_all_transactions(response:Response, db:Session = Depends(get_db), user=D
     if transaction_description:
         transactions = transactions.filter(models.Transactions.description == transaction_description)
 
-    transactions = transactions.limit(limit).offset(skip).all()
+    transactions = transactions.order_by(models.Transactions.id.desc()).limit(limit).offset(skip).all()
 
     if not transactions:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No transactions")

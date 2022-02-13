@@ -83,7 +83,7 @@ def get_all_withdrawals(response:Response, db:Session = Depends(get_db), user=De
     if withdrawal_status:
         withdrawals = withdrawals.filter(models.Withdrawal.status == withdrawal_status)
 
-    withdrawals = withdrawals.limit(limit).offset(skip).all()
+    withdrawals = withdrawals.order_by(models.Withdrawal.id.desc()).limit(limit).offset(skip).all()
 
     if not withdrawals:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No withdrawals")

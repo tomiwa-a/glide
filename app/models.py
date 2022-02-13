@@ -159,6 +159,14 @@ class Transactions(Base):
     order_id = Column(Integer, nullable=False)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     
+class SendMoney(Base):
+    __tablename__ = "send_money"
+
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    user_id = Column(Integer, ForeignKey(column="users.id"), nullable=False)
+    phone_number = Column(String, nullable=False,)
+    description = Column(String, nullable=True)
+    amount = Column(Integer, nullable=False)
 
 # class Post(Base):
 #     __tablename__ = "posts"
