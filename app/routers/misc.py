@@ -195,7 +195,6 @@ def get_single_bank(response:Response, id:int, db:Session = Depends(get_db)):
     
     return bank
 
-
 @router.get("/users/send-money/{id}", response_model=schema.ViewSendMoney)
 def get_send_money(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
 
@@ -208,3 +207,16 @@ def get_send_money(response:Response, id:int, db:Session = Depends(get_db), user
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find money trail")
 
     return send_money
+
+@router.get("/users/deposit/{id}", response_model=schema.ViewDeposit)
+def get_single_deposit(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
+
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    
+    deposit = db.query(models.Deposit).filter(models.Deposit.id == id).first()
+    
+    if not deposit:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find deposit")
+
+    return deposit

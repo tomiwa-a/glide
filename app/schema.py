@@ -186,19 +186,20 @@ class ViewSendMoney(BaseModel):
     phone_number: str
     amount: int
     description: str
+    created_at: datetime
 
     class Config:
         orm_mode = True
 
 class Deposit(BaseModel):
     amount:int
-    reference_id: int
+    reference_id: str
 
 class ViewDeposit(BaseModel):
     id: int
     user_id: int
     amount: int
-    reference_id: int
+    reference_id: str
     created_at: datetime
 
     class Config:
