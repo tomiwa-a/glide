@@ -194,3 +194,17 @@ def get_single_bank(response:Response, id:int, db:Session = Depends(get_db)):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No bank found with id {id} found")
     
     return bank
+
+
+@router.get("/users/send-money/{id}", response_model=schema.ViewSendMoney)
+def get_send_money(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
+
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    
+    send_money = db.query(models.SendMoney).filter(models.SendMoney.id == id).first()
+    
+    if not send_money:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find money trail")
+
+    return send_money

@@ -104,7 +104,7 @@ def get_referals(response:Response, db:Session = Depends(get_db), user=Depends(o
     ref = db.query(models.Referals).filter(models.Referals.user_id == user.id).count()
     return ref
     
-@router.post("/send-money")
+@router.post("/send-money", response_model=schema.ViewSendMoney)
 def send_money(response:Response, payload:schema.SendMoney, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
@@ -159,3 +159,26 @@ def send_money(response:Response, payload:schema.SendMoney, db:Session = Depends
     # return send money table ? idk yet
     send_money = db.query(models.SendMoney).filter(models.SendMoney.id == send_money_id).first()
     return send_money
+
+@router.post("/deposit", response_model=schema.ViewDeposit)
+def send_money(response:Response, payload:schema.Deposit, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    payload = payload.dict()
+    payload['user_id'] = user.id
+
+    deposit = models.Deposit(**payload)
+    db.add(deposit)
+    db.commit()
+    db.refresh(deposit)
+
+    deposit_id  = deposit.id
+    
+    # update amount
+
+    utils.make_transaction(db, user.id, schema.TransactionStatus.successful, payload['amount'], schema.TransactionDesc.deposit, schema.TransactionPos.positive, deposit_id)
+
+    deposit = db.query(models.Deposit).filter(models.Deposit.id == deposit_id).first()
+    return deposit
+    

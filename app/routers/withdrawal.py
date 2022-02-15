@@ -13,7 +13,7 @@ router = APIRouter(
     tags = ['withdrawal']
 )
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=schema.ViewWithdrawals)
 def withdraw(response:Response, payload:schema.Withdraw, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
@@ -49,7 +49,11 @@ def withdraw(response:Response, payload:schema.Withdraw, db:Session = Depends(ge
     
     withdrawal = db.query(models.Withdrawal).filter(models.Withdrawal.id == withdrawal_id).first()
 
+    withdrawal = vars(withdrawal)
+    print(withdrawal['status'])
+    withdrawal['status'] = utils.checkStatus(withdrawal['status'])
     return withdrawal
+
     # takes tranfer charge, then withdraws . should make an util for the transfer charge.
 
 @router.get("/{id}", response_model=schema.ViewWithdrawals)
@@ -67,6 +71,9 @@ def get_single_withdrawal(response:Response, id:int, db:Session = Depends(get_db
         if withdrawal.user_id != user['user'].id:
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authorized to view withdrawal", headers={"WWW-Authenticate": "Bearer"})
 
+    withdrawal = vars(withdrawal)
+    print(withdrawal['status'])
+    withdrawal['status'] = utils.checkStatus(withdrawal['status'])
     return withdrawal
 
 @router.get("/", response_model=List[schema.ViewWithdrawals])
@@ -87,5 +94,9 @@ def get_all_withdrawals(response:Response, db:Session = Depends(get_db), user=De
 
     if not withdrawals:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No withdrawals")
+
+    for withdrawal in withdrawals:
+        withdrawal = vars(withdrawal)
+        withdrawal['status'] = utils.checkStatus(withdrawal['status'])
 
     return withdrawals

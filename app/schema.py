@@ -181,6 +181,29 @@ class SendMoney(BaseModel):
     description: constr(strip_whitespace=True)
     amount: int
 
+class ViewSendMoney(BaseModel):
+    id: int
+    phone_number: str
+    amount: int
+    description: str
+
+    class Config:
+        orm_mode = True
+
+class Deposit(BaseModel):
+    amount:int
+    reference_id: int
+
+class ViewDeposit(BaseModel):
+    id: int
+    user_id: int
+    amount: int
+    reference_id: int
+    created_at: datetime
+
+    class Config:
+        orm_mode = True
+
 class Withdraw(BaseModel):
 
     amount: int
@@ -225,9 +248,11 @@ class ViewUser(BaseModel):
 class ViewWithdrawals(BaseModel):
     id: int
     amount: int
+    bank:int
     account_number: str
+    status: str
     created_at: datetime
-    bank_detail: ViewBanks
+    
 
     class Config:
         orm_mode = True
