@@ -175,7 +175,7 @@ class Deposit(Base):
     id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
     user_id = Column(Integer, ForeignKey(column="users.id"), nullable=False)
     amount = Column(Integer, nullable=False)
-    reference_id = Column(Integer, nullable=False)
+    reference_id = Column(Integer, nullable=False, unique=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
 
 

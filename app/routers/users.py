@@ -164,7 +164,10 @@ def send_money(response:Response, payload:schema.SendMoney, db:Session = Depends
 def send_money(response:Response, payload:schema.Deposit, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
-
+    
+    deposit = db.query(models.Deposit).filter(models.Deposit.reference_id == payload.reference_id).first()
+    if deposit:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Cannot use same reference twice")
     payload = payload.dict()
     payload['user_id'] = user.id
 
@@ -178,6 +181,12 @@ def send_money(response:Response, payload:schema.Deposit, db:Session = Depends(g
     # update amount
 
     utils.make_transaction(db, user.id, schema.TransactionStatus.successful, payload['amount'], schema.TransactionDesc.deposit, schema.TransactionPos.positive, deposit_id)
+
+    new_user = dict()
+    new_user['balance'] = user.balance + payload['amount']
+    user_update = db.query(models.Users).filter(models.Users.id == user.id)
+    user_update.update(new_user, synchronize_session=False)
+    db.commit()
 
     deposit = db.query(models.Deposit).filter(models.Deposit.id == deposit_id).first()
     return deposit
