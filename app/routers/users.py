@@ -191,3 +191,16 @@ def send_money(response:Response, payload:schema.Deposit, db:Session = Depends(g
     deposit = db.query(models.Deposit).filter(models.Deposit.id == deposit_id).first()
     return deposit
     
+@router.patch("/update_pin")
+def update_pin(response:Response, payload:schema.UpdatePin, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    user_check = db.query(models.Users).filter(models.Users.id == user.id)
+
+    payload = payload.dict()
+
+    user_check.update(payload, synchronize_session=False)
+    db.commit()
+
+    return user_check.first()

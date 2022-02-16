@@ -270,3 +270,6 @@ class ViewTransaction(BaseModel):
 
     class Config:
         orm_mode = True
+
+class UpdatePin(BaseModel):
+    pin: int

@@ -35,7 +35,7 @@ def generate_referal(db):
 
 def make_transaction(db, user_id:int, status:TransactionStatus, amount:int, description: TransactionDesc, position:TransactionPos, order_id:int = 0):
 
-    print(locals())
+    # print(locals())
 
     transaction = dict()
     transaction['user_id'] = user_id
