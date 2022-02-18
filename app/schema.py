@@ -71,6 +71,7 @@ class CreateMerchantStaff(BaseModel):
     status: Status = Status.active
 
 class MainProduct(BaseModel):
+    id: int
     name: constr(strip_whitespace=True)
 
     class Config:
@@ -273,3 +274,6 @@ class ViewTransaction(BaseModel):
 
 class UpdatePin(BaseModel):
     pin: int
+
+class UpdatePicture(BaseModel):
+    profile_picture: str

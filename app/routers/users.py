@@ -104,7 +104,7 @@ def get_referals(response:Response, db:Session = Depends(get_db), user=Depends(o
     ref = db.query(models.Referals).filter(models.Referals.user_id == user.id).count()
     return ref
     
-@router.post("/send-money", response_model=schema.ViewSendMoney)
+@router.post("/send-money", response_model=schema.ViewSendMoney, status_code=status.HTTP_201_CREATED)
 def send_money(response:Response, payload:schema.SendMoney, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
@@ -160,7 +160,7 @@ def send_money(response:Response, payload:schema.SendMoney, db:Session = Depends
     send_money = db.query(models.SendMoney).filter(models.SendMoney.id == send_money_id).first()
     return send_money
 
-@router.post("/deposit", response_model=schema.ViewDeposit)
+@router.post("/deposit", response_model=schema.ViewDeposit, status_code=status.HTTP_201_CREATED)
 def send_money(response:Response, payload:schema.Deposit, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
@@ -193,6 +193,20 @@ def send_money(response:Response, payload:schema.Deposit, db:Session = Depends(g
     
 @router.patch("/update_pin")
 def update_pin(response:Response, payload:schema.UpdatePin, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    user_check = db.query(models.Users).filter(models.Users.id == user.id)
+
+    payload = payload.dict()
+
+    user_check.update(payload, synchronize_session=False)
+    db.commit()
+
+    return user_check.first()
+
+@router.patch("/update_picture")
+def update_picture(response:Response, payload:schema.UpdatePicture, db:Session = Depends(get_db), user=Depends(oauth.get_current_user)):
     if user == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
 

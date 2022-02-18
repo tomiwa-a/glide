@@ -23,7 +23,7 @@ def get_products(response:Response, db:Session = Depends(get_db)):
     return products
 
 @router.get("/{id}", response_model=schema.MainProduct)
-def get_products(response:Response, id:int, db:Session = Depends(get_db)):
+def get_single_product(response:Response, id:int, db:Session = Depends(get_db)):
     
     products = db.query(models.MainProducts).filter(models.MainProducts.id == id).first()
 
@@ -32,8 +32,8 @@ def get_products(response:Response, id:int, db:Session = Depends(get_db)):
 
     return products
 
-@router.post("/")
-def get_products(response:Response, payload:schema.CreateMainProduct, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+@router.post("/", status_code=status.HTTP_201_CREATED)
+def create_product(response:Response, payload:schema.CreateMainProduct, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
     
     if admin == None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})

@@ -44,6 +44,7 @@ class Users(Base):
     address = Column(String)
     balance = Column(Float, default=0)
     pin = Column(Integer)
+    profile_picture = Column(String, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=text('now()'))
     status = Column(Enum(Status), nullable=False)
 

@@ -43,6 +43,9 @@ def get_single_country(response:Response, id:int, db:Session = Depends(get_db)):
 @router.post("/countries", status_code=status.HTTP_201_CREATED)
 def create_country(response:Response, payload:schema.CreateCountry, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
 
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
     payload.country = payload.country.strip(" ")
 
     country = db.query(models.Countries).filter(models.Countries.country == payload.country).first()
@@ -58,6 +61,9 @@ def create_country(response:Response, payload:schema.CreateCountry, db:Session =
 
 @router.put("/countries/{id}")
 def update_country(response:Response, id:int, payload:schema.CreateCountry, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
 
     country = db.query(models.Countries).filter(models.Countries.id == id)
     country_check = country.first()
@@ -88,8 +94,12 @@ def get_single_state(response:Response, id:int, db:Session = Depends(get_db)):
         "state": state,
     }
 
-@router.post("/states/{id}")
-def create_state(response:Response, payload:schema.CreateState, id:int, db:Session = Depends(get_db)):
+@router.post("/states/{id}", status_code=status.HTTP_201_CREATED)
+def create_state(response:Response, payload:schema.CreateState, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
     country  = db.query(models.Countries).filter(models.Countries.id == id).first()
 
     if not country:
@@ -110,7 +120,10 @@ def create_state(response:Response, payload:schema.CreateState, id:int, db:Sessi
     
 
 @router.put("/states/{id}")
-def update_state(response:Response, payload:schema.CreateState, id:int, db:Session = Depends(get_db)):
+def update_state(response:Response, payload:schema.CreateState, id:int, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
 
     state  = db.query(models.States).filter(models.States.id == id)
     state_check = state.first()
@@ -133,6 +146,9 @@ def update_state(response:Response, payload:schema.CreateState, id:int, db:Sessi
 @router.get("/admin")
 def view_admins(response:Response, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin), admin_status:Optional[schema.Status] = "",):
 
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
     admins = db.query(models.Admin)
     
     if admin_status:
@@ -151,6 +167,9 @@ def view_admins(response:Response, db:Session = Depends(get_db), admin=Depends(o
 #create an admin
 @router.post("/admin", status_code=status.HTTP_201_CREATED, response_model=schema.ViewAdmin)
 def create_admin(response:Response, payload:schema.CreateAdmin, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
 
     admin = db.query(models.Admin).filter(models.Admin.username == payload.username).first()
 
