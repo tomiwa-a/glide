@@ -15,7 +15,7 @@ def admin_login(response:Response, payload:schema.Login, db:Session = Depends(ge
     admin = db.query(models.Admin).filter(models.Admin.username == payload.username).filter(models.Admin.status == "active").first()
     if not admin:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail=f"Admin with username '{payload.username}' not found")
-    
+
     if not utils.verify_password(payload.password, admin.password):
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Incorrect password")
 

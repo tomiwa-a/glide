@@ -197,7 +197,9 @@ def change_password(response:Response, payload:schema.ChangeAdminPassword, db:Se
     if not admin.first():
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Admin not fouund")
 
-    admin.update(payload.dict(), synchronize_session=False)
+    payload = payload.dict()
+    payload['password'] = utils.hash_password(payload['password'])
+    admin.update(payload, synchronize_session=False)
     db.commit()
     admin = admin.first()
     return admin

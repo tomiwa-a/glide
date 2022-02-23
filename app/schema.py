@@ -153,7 +153,6 @@ class ViewAdmin(BaseModel):
     id: int
     name: constr(strip_whitespace=True)
     username: constr(strip_whitespace=True)
-    status: constr(strip_whitespace=True)
     created_at: datetime
 
     class Config:
