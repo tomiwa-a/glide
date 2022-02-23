@@ -164,6 +164,9 @@ class CreateAdmin(BaseModel):
     username: constr(strip_whitespace=True)
     status: Status = Status.active
     
+class ChangeAdminPassword(BaseModel):
+    password: constr(strip_whitespace=True)
+
 # 7.426646669537475, 3.910063533386918
 
 class CreateUser(BaseModel):
@@ -277,3 +280,17 @@ class UpdatePin(BaseModel):
 
 class UpdatePicture(BaseModel):
     profile_picture: str
+
+
+class ViewMerchantBranch(BaseModel):
+    id: int
+    name: str
+    products:List[int]
+    merchant_id: int
+    longitude: str
+    lattitude: str
+    country: int
+    state:int
+
+    class Config:
+        orm_mode = True

@@ -1,7 +1,7 @@
 from typing import List, Optional
 from pydantic import EmailStr, parse_obj_as
 
-from sqlalchemy import cast, func
+from sqlalchemy import cast, distinct, func
 import sqlalchemy
 from .. import models, schema, utils, oauth
 from ..database import get_db
@@ -218,3 +218,26 @@ def update_picture(response:Response, payload:schema.UpdatePicture, db:Session =
     db.commit()
 
     return user_check.first()
+
+
+@router.get("/get_closest", response_model=List[schema.ViewMerchantBranch])
+def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_current_user), longitude:str = "", lattitude:str = "", product:int = 0):
+
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    if not (longitude or lattitude or product):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Longitude, Lattitude & Product id are required")
+
+    # SELECT DISTINCT(a.*) FROM merchant_branches a JOIN products b ON a.id = b.branch_id WHERE a.state = 8 AND a.status = 'active' AND ( b.product_id = 1 AND b.status = 'active')
+
+    # branch = db.query(models.MerchantBranch).filter(models.MerchantBranch.status == models.Status.active).filter(models.MerchantBranch.state == user.state).all()
+
+    branch = db.query(models.MerchantBranch).join(models.Products, models.MerchantBranch.id == models.Products.branch_id).filter(models.MerchantBranch.state == user.state).filter(models.MerchantBranch.status == models.Status.active).filter(models.Products.status == models.Status.active).filter(models.Products.product_id == product).group_by(models.MerchantBranch.id).all()
+    
+    # print(branch)
+
+    if not branch:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No branches selling close to you.")
+
+    return branch

@@ -184,8 +184,22 @@ def create_admin(response:Response, payload:schema.CreateAdmin, db:Session = Dep
     db.commit()
     db.refresh(admin)
 
-    
+    return admin
 
+@router.patch("/admin")
+def change_password(response:Response, payload:schema.ChangeAdminPassword, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    admin = db.query(models.Admin).filter(models.Admin.id == admin.id)
+
+    if not admin.first():
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"Admin not fouund")
+
+    admin.update(payload.dict(), synchronize_session=False)
+    db.commit()
+    admin = admin.first()
     return admin
 
 # @router.get("/list_banks")
