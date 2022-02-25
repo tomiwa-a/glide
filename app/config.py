@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     secret_key: str
     algorithm:str
     access_token_expire_minutes:int
+    distance_matrix_api_key: str
 
     class Config:
         env_file = '.env'

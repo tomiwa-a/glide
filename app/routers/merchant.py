@@ -30,8 +30,10 @@ def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends
         q = q.strip(" ")
         search = "%{}%".format(q)
         merchants = merchants.filter(models.Merchants.name.like(search))
+
+    total_rows = merchants.order_by(models.Merchants.id.desc()).count()
         
-    merchants = merchants.limit(limit).offset(skip).all()
+    merchants = merchants.order_by(models.Merchants.id.desc()).limit(limit).offset(skip).all()
 
     if not merchants:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No merchants found with parameters")
@@ -47,6 +49,7 @@ def get_merchants(response:Response, db:Session = Depends(get_db), admin=Depends
         "show": limit, 
         "skip": skip, 
         "status": merchant_status,
+        "total_rows": total_rows
     }
 
     final['merchants'] = parse_obj_as(List[schema.Merchant], merchants)
@@ -188,7 +191,8 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
         staff_role = [int(number) for number in staff_role.split(",")]
         staffs = staffs.filter(models.MerchantStaff.role.in_(staff_role))
     
-    staffs = staffs.limit(limit).offset(skip).all()
+    total_rows = staffs.order_by(models.MerchantStaff.id.desc()).count()
+    staffs = staffs.order_by(models.MerchantStaff.id.desc()).limit(limit).offset(skip).all()
 
     if not staffs:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No staff found for this parameters")
@@ -208,7 +212,8 @@ def get_merchants_staff(id:int, response:Response, db:Session = Depends(get_db),
         "status": staff_status, 
         "branch": branch,
         "query" :q,
-        "role": staff_role
+        "role": staff_role,
+        "total_rows": total_rows
     }
     
     final['merchant_staff'] = parse_obj_as(List[schema.ViewMerchantStaff], staffs)

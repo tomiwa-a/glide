@@ -1,5 +1,9 @@
+from dis import dis
+from email.policy import HTTP
+from textwrap import indent
 from typing import List, Optional
 from pydantic import EmailStr, parse_obj_as
+import requests, json
 
 from sqlalchemy import cast, distinct, func
 import sqlalchemy
@@ -7,6 +11,8 @@ from .. import models, schema, utils, oauth
 from ..database import get_db
 from fastapi import FastAPI, Query, Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import Session
+from ..config import settings
+
 router = APIRouter(
     prefix = "/users",
     tags = ['users']
@@ -220,7 +226,7 @@ def update_picture(response:Response, payload:schema.UpdatePicture, db:Session =
     return user_check.first()
 
 
-@router.get("/get_closest", response_model=List[schema.ViewMerchantBranch])
+@router.get("/get_closest")
 def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_current_user), longitude:str = "", lattitude:str = "", product:int = 0):
 
     if user == None:
@@ -233,11 +239,84 @@ def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oa
 
     # branch = db.query(models.MerchantBranch).filter(models.MerchantBranch.status == models.Status.active).filter(models.MerchantBranch.state == user.state).all()
 
-    branch = db.query(models.MerchantBranch).join(models.Products, models.MerchantBranch.id == models.Products.branch_id).filter(models.MerchantBranch.state == user.state).filter(models.MerchantBranch.status == models.Status.active).filter(models.Products.status == models.Status.active).filter(models.Products.product_id == product).group_by(models.MerchantBranch.id).all()
+    branches = db.query(models.MerchantBranch).join(models.Products, models.MerchantBranch.id == models.Products.branch_id).filter(models.MerchantBranch.state == user.state).filter(models.MerchantBranch.status == models.Status.active).filter(models.Products.status == models.Status.active).filter(models.Products.product_id == product).group_by(models.MerchantBranch.id).all()
     
     # print(branch)
 
-    if not branch:
+    if not branches:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No branches selling close to you.")
+    
+    destinations = list()
+    new_str = ""
+    count = 0
 
-    return branch
+    for branch in branches:
+        branch = vars(branch)
+        # print(branch)
+        min_dest = list()
+        long = branch['longitude']
+        latt = branch['lattitude']
+
+        min_dest = [long, latt]
+        
+        if count:
+            new_str = new_str + "|"
+
+        new_str = new_str + long + ","+latt
+        destinations.append(min_dest)
+        count = count + 1
+    
+    # print(destinations)
+
+    # for branch in
+
+    try:
+
+        url = f"https://maps.googleapis.com/maps/api/distancematrix/json?destinations={new_str}&origins={longitude},{lattitude}&key={settings.distance_matrix_api_key}"
+
+        payload={}
+        headers = {}
+
+        response = requests.request("GET", url, headers=headers, data=payload)
+
+        json_data = json.loads(response.text)
+
+        data = json_data['rows'][0]['elements']
+
+        distance_dict = dict()
+
+        for i in range(len(data)):
+            new_data = data[i]
+            if new_data['status'] != "OK":
+                continue
+            distance_dict[i] = new_data['distance']['value']
+
+        # print(distance_dict)
+        # print(data)
+        a = sorted(distance_dict.items(), key=lambda x: x[1])
+        a = dict((x, y) for x, y in a)
+        # print(a[0])
+
+        # generate the list
+        gen_list = list()
+
+        for key, value in enumerate(a.items()):
+            # print(key, value[1])
+            new_branch = vars(branches[key])
+            new_branch['status'] = utils.checkStatus(new_branch['status'])
+            new_branch['distance'] = str(value[1]) + " km"
+
+            gen_list.append(new_branch)
+
+        final = dict()
+
+        final['status'] = "successful"
+        final['merchants'] = gen_list
+
+        # print(json.dumps(json_data['rows'][0]['elements'][1], indent=2))
+    
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error calculating locations")
+
+    return final
