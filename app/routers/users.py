@@ -235,6 +235,11 @@ def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oa
     if not (longitude or lattitude or product):
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Longitude, Lattitude & Product id are required")
 
+    product_name = db.query(models.MainProducts).filter(models.MainProducts.id == product).first()
+    if not product_name:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product not available")
+    product_name = vars(product_name)['name']
+
     # SELECT DISTINCT(a.*) FROM merchant_branches a JOIN products b ON a.id = b.branch_id WHERE a.state = 8 AND a.status = 'active' AND ( b.product_id = 1 AND b.status = 'active')
 
     # branch = db.query(models.MerchantBranch).filter(models.MerchantBranch.status == models.Status.active).filter(models.MerchantBranch.state == user.state).all()
@@ -303,7 +308,11 @@ def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oa
         for key, value in enumerate(a.items()):
             # print(key, value[1])
             new_branch = vars(branches[key])
+            branch_id = new_branch['id']
+            check_price = db.query(models.Products).filter(models.Products.branch_id == branch_id).filter(models.Products.product_id == product).first()
+            print(check_price)
             new_branch['status'] = utils.checkStatus(new_branch['status'])
+            new_branch['price'] = vars(check_price)['price']
             new_branch['distance'] = str(value[1]) + " km"
 
             gen_list.append(new_branch)
@@ -311,6 +320,7 @@ def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oa
         final = dict()
 
         final['status'] = "successful"
+        final['product'] = product_name
         final['merchants'] = gen_list
 
         # print(json.dumps(json_data['rows'][0]['elements'][1], indent=2))
