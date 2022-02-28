@@ -8,7 +8,8 @@ from ..database import get_db
 from fastapi import FastAPI, Query, Response, status, HTTPException, Depends, APIRouter
 from sqlalchemy.orm import session
 from sqlalchemy.orm import Session
-import requests
+import requests, json
+from ..config import settings
 
 router = APIRouter(
     tags=['misc']
@@ -255,3 +256,26 @@ def get_single_deposit(response:Response, id:int, db:Session = Depends(get_db), 
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Could not find deposit")
 
     return deposit
+
+
+@router.get("/address_to_coords")
+def get_address_to_coords(response:Response, address:str):
+
+    try:
+
+        url = f"https://maps.googleapis.com/maps/api/geocode/json?address={address}&key={settings.distance_matrix_api_key}"
+
+        payload={}
+        headers = {}
+
+        response = requests.request("GET", url, headers=headers, data=payload)
+        json_data = json.loads(response.text)
+        print(response.text)
+
+    except Exception as e:
+        print(e)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error calculating locations")
+    final = dict()
+    final['address'] = address
+    final['location'] = json_data['results'][0]['geometry']['location']
+    return final
