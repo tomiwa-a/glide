@@ -1,5 +1,7 @@
 from dis import dis
 from email.policy import HTTP
+from math import prod
+import math
 from textwrap import indent
 from typing import List, Optional
 from pydantic import EmailStr, parse_obj_as
@@ -310,10 +312,11 @@ def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oa
             new_branch = vars(branches[key])
             branch_id = new_branch['id']
             check_price = db.query(models.Products).filter(models.Products.branch_id == branch_id).filter(models.Products.product_id == product).first()
-            print(check_price)
+            # print(check_price)
             new_branch['status'] = utils.checkStatus(new_branch['status'])
             new_branch['price'] = vars(check_price)['price']
-            new_branch['distance'] = str(value[1]) + " km"
+            new_branch['distance'] = value[1]/1000
+            new_branch['product_id'] = vars(check_price)['id']
 
             gen_list.append(new_branch)
 
@@ -330,3 +333,97 @@ def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oa
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Error calculating locations")
 
     return final
+
+
+@router.get("/purchase_detail")
+def get_purchase_detail(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_current_user), size:float = 0, distance:float = 0,  product_id: int = 0, longitude:str="", lattitude:str ="" ):
+
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    if not (longitude or lattitude or product_id or size or distance):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Longitude, Lattitude, size, distance & Product id are required")
+
+    # get the price of the thingy
+
+    product = db.query(models.Products).filter(models.Products.id == product_id).first()
+    if not product:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Product doesn't exist")
+    
+    #get branch_id
+
+    product = vars(product)
+    price = product['price']
+    branch_id = product['branch_id']
+    main_product_id = product ['product_id']
+
+    main_product = db.query(models.MainProducts).filter(models.MainProducts.id == main_product_id).first()
+    main_product = vars(main_product)
+
+    branch = db.query(models.MerchantBranch).filter(models.MerchantBranch.id == branch_id).first()
+    branch = vars(branch)
+
+    distance_time = 36 #seconds
+    distance_seconds = distance * (size * distance_time) 
+
+
+    estimated_time = distance_seconds / 60
+    #3% off per kg, min of 18 naira 
+
+    service = (3/100)* price
+    if service < 18:
+        service = 18
+
+    service = service * size
+    print(service)
+
+    main_price = price * size
+
+    delivery_dist = 40
+    if distance < 5:
+        delivery_dist = 50
+        
+
+    delivery_price = 200 + 100 + (delivery_dist*distance)
+
+    transaction_charge = (1.5/100) * (main_price + delivery_price)
+
+    total_price = main_price + delivery_price + transaction_charge
+
+    finale = dict()
+    finale['status'] = "successful"
+    final = dict()
+    finale['details'] = final
+    
+    final['product_name'] = main_product['name']
+
+    ##
+
+    merchant_details = dict()
+    final['merchant_details'] = merchant_details
+
+    merchant_details['name'] = branch['name']
+    merchant_details['longitude'] = branch['longitude']
+    merchant_details['lattitude'] = branch['lattitude']
+    # merchant_details['address'] = branch['address']
+
+    ##
+    final['distance'] = distance
+    final['size'] = size
+    final['estimated_time'] = str(math.ceil(estimated_time)) + " minutes"
+    final['price'] = price
+    final['main_price'] = main_price
+    final['delivery_price'] = delivery_price
+    final['transaction_charge'] = "{:.2f}".format(transaction_charge)
+    final['total_price'] = "{:.2f}".format(total_price)
+    
+
+    # "10 minutes, 30 seconds"
+
+    return finale
+    #get branch details then the branch details.
+
+    # SELECT * FROM merchants a JOIN merchant_branches b ON WHERE a.id = b.merchant AND b.id = branch_id 
+
+    #80 % of delivey goes to driver
+    # (the real amount - aggreed commision ) * no of kg
