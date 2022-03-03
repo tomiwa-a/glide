@@ -33,8 +33,19 @@ class TransactionStatus(str, Enum):
     declined = 'declined'
     cancelled = 'cancelled'
 
+class OrderStatus(str, Enum):
+    order_pending = 'Order Pending'
+    driver_arrived = 'Driver Arrived'
+    order_picked = 'Order Picked'
+    order_completed = 'Order Completed'
+    order_enroute = 'Order Enroute'
+    order_arrived = 'Order Arrived'
+    order_confirmed = 'Order Confirmed'
+    order_declined = 'Order Declined'
+
 class TransactionFees(IntEnum):
     transfer_charge:int = 100
+
 
 class Login(BaseModel):
     username: constr(strip_whitespace=True)
@@ -293,3 +304,16 @@ class ViewMerchantBranch(BaseModel):
 
     class Config:
         orm_mode = True
+
+
+class MakePayment(BaseModel):
+    longitude: str
+    lattitude: str
+    distance: float
+    size: float
+    estimated_time: str
+    product: int
+    main_amount: float
+    delivery_amount: float
+    total_amount: float
+    status: str = OrderStatus.order_pending

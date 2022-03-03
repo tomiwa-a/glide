@@ -227,7 +227,6 @@ def update_picture(response:Response, payload:schema.UpdatePicture, db:Session =
 
     return user_check.first()
 
-
 @router.get("/get_closest")
 def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_current_user), longitude:str = "", lattitude:str = "", product:int = 0):
 
@@ -334,7 +333,6 @@ def get_closest(response:Response, db:Session = Depends(get_db), user=Depends(oa
 
     return final
 
-
 @router.get("/purchase_detail")
 def get_purchase_detail(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_current_user), size:float = 0, distance:float = 0,  product_id: int = 0, longitude:str="", lattitude:str ="" ):
 
@@ -427,3 +425,28 @@ def get_purchase_detail(response:Response, db:Session = Depends(get_db), user=De
 
     #80 % of delivey goes to driver
     # (the real amount - aggreed commision ) * no of kg
+
+@router.post("/make_purchase")
+def make_purchase(response:Response, payload:schema.MakePayment, db:Session = Depends(get_db), user=Depends(oauth.get_current_user), ):
+
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    if user.balance < payload.total_amount:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Insufficient balance",)
+
+    payload = vars(payload)
+    payload['user_id'] = user.id
+    purchase = models.Order(**payload)
+    db.add(purchase)
+    db.commit()
+    db.refresh(purchase)
+
+    purchase_id = purchase.id
+
+
+    utils.make_transaction(db, user.id, schema.TransactionStatus.pending, payload['total_amount'], schema.TransactionDesc.purchase, schema.TransactionPos.negative, purchase_id)
+
+    purchase = db.query(models.Order).filter(models.Order.id == purchase_id).first()
+
+    return purchase

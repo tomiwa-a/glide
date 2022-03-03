@@ -1,6 +1,7 @@
+from ast import Str
 import enum
 from multiprocessing.dummy import Array
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Float, Date, Enum, ARRAY
+from sqlalchemy import FLOAT, Column, Integer, String, Boolean, DateTime, Float, Date, Enum, ARRAY
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql.expression import text
 from sqlalchemy.sql.schema import ForeignKey
@@ -178,6 +179,25 @@ class Deposit(Base):
     amount = Column(Integer, nullable=False)
     reference_id = Column(String, nullable=False, unique=True)
     created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+
+class Order(Base):
+    __tablename__ = "order"
+
+    id = Column(Integer, primary_key=True, nullable=False, autoincrement=True)
+    user_id = Column(Integer, ForeignKey(column="users.id"), nullable=False)
+    product = Column(Integer, nullable=False)
+    estimated_time = Column(String, nullable=False)
+    distance = Column(Float, nullable=False)
+    size = Column(Float, nullable=False)
+    longitude = Column(String, nullable=False)
+    lattitude = Column(String, nullable=False)
+    main_amount = Column(Float, nullable=False)
+    delivery_amount = Column(Float, nullable=False)
+    total_amount = Column(Float, nullable=False)
+    status = Column(String, nullable=False)
+    created_at = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+
+
 
 
 # class Post(Base):
