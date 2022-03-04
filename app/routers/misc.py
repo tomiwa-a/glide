@@ -257,9 +257,30 @@ def get_single_deposit(response:Response, id:int, db:Session = Depends(get_db), 
 
     return deposit
 
+@router.get("/order/{id}")
+def get_single_order(response:Response, id:int, db:Session = Depends(get_db), user=Depends(oauth.get_all)):
 
-# @router.get("/users/order/{id}", response_model=schema.ViewOrder)
+    order = db.query(models.Order).filter(models.Order.id == id).first()
+    
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"No order with id {id}")
 
+    if user['user_status'] == "true":
+        user_detail = user['user']
+        if user_detail.id != order.user_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You can't access order with id {id}")
+        
+    elif user['merchant_status'] == "true":
+        merchant_detail = user['merchant']
+        merchant_id = merchant_detail['MerchantStaff'].merchant
+
+        branch = db.query(models.Products).filter(models.Products.product_id == order.product).first()
+        merchant_check = db.query(models.MerchantBranch).filter(models.MerchantBranch.id == branch.branch_id).first()
+
+        if merchant_check.merchant_id != merchant_id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=f"You can't access order with id {id}")
+        
+    return order
 
 @router.get("/address_to_coords")
 def get_address_to_coords(response:Response, address:str):

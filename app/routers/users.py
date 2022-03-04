@@ -444,6 +444,11 @@ def make_purchase(response:Response, payload:schema.MakePayment, db:Session = De
 
     purchase_id = purchase.id
 
+    new_user = dict()
+    new_user['balance'] = user.balance - payload['total_amount']
+    user_update = db.query(models.Users).filter(models.Users.id == user.id)
+    user_update.update(new_user, synchronize_session=False)
+    db.commit()
 
     utils.make_transaction(db, user.id, schema.TransactionStatus.pending, payload['total_amount'], schema.TransactionDesc.purchase, schema.TransactionPos.negative, purchase_id)
 
