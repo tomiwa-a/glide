@@ -76,7 +76,7 @@ def get_single_withdrawal(response:Response, id:int, db:Session = Depends(get_db
     withdrawal['status'] = utils.checkStatus(withdrawal['status'])
     return withdrawal
 
-@router.get("/", response_model=List[schema.ViewWithdrawals])
+@router.get("/")
 def get_all_withdrawals(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_admin_user), limit:int =10, skip:int = 0, withdrawal_status:Optional[schema.Status] = ""):
 
     if user == None:
@@ -90,6 +90,7 @@ def get_all_withdrawals(response:Response, db:Session = Depends(get_db), user=De
     if withdrawal_status:
         withdrawals = withdrawals.filter(models.Withdrawal.status == withdrawal_status)
 
+    total_rows = withdrawals.count()
     withdrawals = withdrawals.order_by(models.Withdrawal.id.desc()).limit(limit).offset(skip).all()
 
     if not withdrawals:
@@ -99,4 +100,9 @@ def get_all_withdrawals(response:Response, db:Session = Depends(get_db), user=De
         withdrawal = vars(withdrawal)
         withdrawal['status'] = utils.checkStatus(withdrawal['status'])
 
-    return withdrawals
+    final = dict()
+    final['status'] = "successful"
+    final['total_rows'] = total_rows
+    final['withdrawals'] = withdrawals
+
+    return final

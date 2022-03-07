@@ -1,3 +1,4 @@
+from math import prod
 from typing import List, Optional
 
 from sqlalchemy import func
@@ -49,3 +50,27 @@ def create_product(response:Response, payload:schema.CreateMainProduct, db:Sessi
     db.refresh(product)
 
     return product
+
+
+@router.put("/{id}")
+def update_product(response:Response, id:int, payload:schema.CreateMainProduct, db:Session = Depends(get_db), admin=Depends(oauth.get_current_admin)):
+
+    if admin == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+
+    product_check = db.query(models.MainProducts).filter(models.MainProducts.id == id)
+
+    if not product_check.first():
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"No main product with id {id}")
+
+    check = db.query(models.MainProducts).filter(models.MainProducts.name == payload.name).first()
+    if check:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Name has been used before ")
+
+    product_check.update(payload.dict(), synchronize_session=False)
+    db.commit()
+
+    product = product_check.first()
+
+    return product
+    

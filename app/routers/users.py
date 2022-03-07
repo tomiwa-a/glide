@@ -34,6 +34,25 @@ def get_single_user(response:Response, db:Session = Depends(get_db), user=Depend
 
 #get all users
 
+@router.get("/all")
+def get_all_users(response:Response, db:Session = Depends(get_db), user=Depends(oauth.get_current_admin), limit:int =10, skip:int = 0,):
+    if user == None:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials", headers={"WWW-Authenticate": "Bearer"})
+    
+    users = db.query(models.Users).order_by(models.Users.id.desc()).limit(limit).offset(skip).all()
+
+    if not users:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No users found")
+    
+    user_count = db.query(models.Users).count()
+    final = {}
+    final['status'] = "success"
+    final['total'] = user_count
+    final['users'] = users
+
+    return final
+
+
 #check if phone has been used
 @router.get("/check_phone/{phone}")
 def check_phone(response:Response, phone:str, db:Session = Depends(get_db)):
